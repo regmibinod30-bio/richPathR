@@ -1,0 +1,198 @@
+---
+title: "richPathR"
+author: Regmi B, Brooks SR, Uhlman AJ, Sun Hong-Wei, National Institute of Arthritis and Musculoskeletal and Skin Disease, National Institutes of Health, Bethesda, MD, USA
+date: "Auguest 2 2022"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## BACKGROUND
+
+Gene set enrichment analysis (GSEA) is an important step for disease and drug
+discovery. Omics profiling of tissue or cells of patients and healthy
+individuals generated gene lists that need to be further investigated in the
+known biological context. Multiple public data sources with annotated gene sets
+are available for GSEA, and enrichR is the most popular web application still
+requiring custom tool for large-scale mining. richPathR package is a
+collection of R functions that helps researchers carry out exploratory analysis
+and visualization of gene set enrichment using EnrichR.
+
+## DEPENDENCIES
+
+This package has been developed using following version of R and R packages,
+therefore we recommend using these or later versions:
+1. dplyr(1.0.8)
+2. enrichR(3.0)
+3. filestrings(3.2.2)
+4. ggplot2(3.3.5)
+5. pheatmap(1.0.12)
+6. plotly(4.10.0)
+7. purrr(0.3.4)
+5. readxl(1.4.0)
+6. tidyr(1.2.0)
+7. VennDiagram(1.7.3)
+8. xlsx(0.6.5)  
+9. R(4.1.3)
+10. devtools(2.4.3)                 # Only for developing package
+11. roxygen2(7.2.0)                 # Only for developing  package
+
+Here are the step by  step procedure for implementing this package. 
+
+## Call packages and dependencies
+
+Make sure all R packages mentioned above are installed in your machine before implementing
+call_required_packages.R
+```{r setup, echo=FALSE}
+call_required_packages()
+```
+
+## Download the current database from enrichR.
+
+This parameter less function implements plug-in tool provided by enrichr and
+downloads data from the site.
+```{r setup, echo=FALSE}
+db_EnrichR_lib()
+```
+
+### Implement enrichr
+
+This function implements enrichr and get the results. The result dir will be
+generated within data directory.
+
+From db_EnrichR_lib output, select the libraries of interest and make a vector.
+Also, put the csv file of gene lists in Data dir and provide path to the file to
+the second parameter of this function.
+```{r setup, echo=FALSE}
+dbs <- c("Cancer_Cell_Line_Encyclopedia", "NCI-60_Cancer_Cell_Lines", 
+  "NCI-Nature_2016", "UK_Biobank_GWAS_v1", "KEGG_2021_Human")
+implement_enrichr(dbs = dbs, gene_list = "data/prc_gene_set.csv" )
+```
+
+### Generate the  data frame
+
+This parameter less function generates a data frame with 11 columns. This 
+function will add four columns i.e. library, gene_list, library_abbrev and
+term_abbrev into the data frame. Make sure results dir created by 
+implement_enrichr  is available in /Data.
+```{r setup, echo=FALSE}
+enrichr_df <- enrichr_df()
+```
+
+### Generate expanded data frame
+
+This parameter less function generates a data frame with 11 columns. This 
+function will add two 4 columns i.e. library, gene_list, library_abbrev and
+term_abbrev into the data frame to provide where each term came from. Make sure
+results dir created by implement_enrichr  is available in /Data. The difference
+of output of enrichr_df and expanded_enrichr_df is that the later outputs the 
+larger data frame exploding overlapping genes and each gene has a separate
+record (row).
+```{r setup, echo=FALSE}
+expanded_enrichr_df <- expanded_enrichr_df()
+```
+
+### Extract the table of ubiquitous terms
+
+This function extracts the most common terms in the  data
+frame. Minimum combined score parameter can take any positive integer. Before
+implementing this function, make sure enrichr_df() is implemented and saved.
+```{r setup, echo=FALSE}
+enrichr_ubiquitous_terms(enrichr_df = enrichr_df, minimum_combined_score = 5)
+```
+
+### Extract unique terms
+
+This function extracts  the most unique terms in the data frame. Minimum
+combined score parameter can take any positive integer. Before implementing this
+function, make sure enrichr_df() is implemented and saved.
+```{r setup, echo=FALSE}
+enrichr_unique_terms(enrichr_df = enrichr_df, minimum_combined_score = 5)
+```
+
+### Extract jaccard similarity
+
+This function calculates the ratio of intersection and union of database gene 
+set and user' gene set for  each term.
+```{r setup, echo=FALSE}
+estimate_jaccard_similarity(enrichr_data_frame = enrichr_df)
+```
+
+### Heat map 
+
+This function required expanded data frame to generate the heat map. The map
+shows the most ubiquitous genes. Minimum score can be any positive integer.
+```{r setup}
+enrichr_heat_map(expanded_enrichr_df, minimum_combined_score)
+```
+
+### Venn diagram
+
+If there are overlapping genes in the  gene set being investigated, the venn 
+diagram can be created using this function
+================================
+NOTE: creating  venn diagram using inbuilt template is quick and clear for 
+readers but it disregards the proportion of intersection and unique areas. 
+```{r setup, echo=FALSE}
+gene_list_venn_diagram(gene_list_file ="data/prc_gene_set.csv" , gene_set_names)
+```
+================================
+
+
+### Violin plot gene list
+
+This function plots a violin plot of log2combined score for each gene list. The
+minimum_combined_score can be any positive integer.
+```{r setup}
+violin_plot_genelist(enrichr_df, minimum_combined_score)
+```
+
+### Violin plot gene list and library
+
+This function generates a violin plot of log2combined score for each gene list 
+across the libraries. The minimum_combined_score can be any positive integer.
+```{r setup}
+violin_plot_genelist_library(enrichr_df, minimum_combined_score)
+```
+
+### Tile plot
+
+This function generates a tile plot for exploratory visualization of gene count
+distributed across gene list and libraries. The minimum_combined_score can be
+any positive integer.
+```{r setup}
+tile_plot(expanded_combined_score, minimum_combined_score)
+```
+
+### Bar plot with gene  list and library
+
+This function generates the mixed horizontal bar plot of gene list and library. 
+The minimum_combined_score can be any positive integer.
+```{r setup}
+bar_plot_genelist_library(enrichr_df, minimum_combined_score)
+```
+
+### Bar plot of over all term frequencies
+This function generates the bar diagram with term counts distributed in each
+gene list. The minimum_combined_score can be any positive integer.
+```{r setup}
+bar_plot_count(enrichr_df, minimum_combined_score)
+```
+
+### Bar terms vs gene list
+
+This function generates the horizontal bar plot for the top 30 most significant
+terms (sorted by combined  score). The minimum_combined_score can be any
+positive integer.
+```{r setup}
+bar_genelist_terms(enrichr_df, minimum_combined_score)
+```
