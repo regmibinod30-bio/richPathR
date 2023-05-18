@@ -48,8 +48,6 @@ packages, the following function can be used:
 
 call_required_packages() 
 
-========================
-NOTE: check vignette for detail explanation. 
-========================
+
 
 
